@@ -8,6 +8,10 @@ linux-cachyos-headers
 linux-firmware
 mkinitcpio
 mkinitcpio-archiso
+nbd
+mkinitcpio-nfs-utils
+pv
+arch-install-scripts
 dosfstools
 e2fsprogs
 squashfs-tools
@@ -24,6 +28,10 @@ networkmanager
 sudo
 python
 git
+curl
+unzip
+7zip
+xdg-user-dirs
 
 # --- Audio (PipeWire) ---
 pipewire
@@ -40,9 +48,12 @@ dolphin
 konsole
 kate
 ark
+noto-fonts
+ttf-liberation
 
 # --- GPU & Vulkan Stack (AMD / Intel + 32-bit multilib) ---
 mesa
+mesa-utils
 vulkan-icd-loader
 vulkan-radeon
 vulkan-intel

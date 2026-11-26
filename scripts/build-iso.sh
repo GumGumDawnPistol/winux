@@ -27,7 +27,7 @@ ensure_cachyos_key() {
   fi
 
   echo "Importing CachyOS repository signing key (${CACHYOS_KEY_ID})..."
-  if [[ ! -d /etc/pacman.d/gnupg ]]; then
+  if ! gpg --homedir /etc/pacman.d/gnupg --list-secret-keys 2>/dev/null | grep -q '^sec'; then
     run_as_root pacman-key --init
     run_as_root pacman-key --populate archlinux
   fi

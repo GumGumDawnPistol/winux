@@ -1,0 +1,5 @@
+enable sddm.service
+enable NetworkManager.service
+enable systemd-binfmt.service
+enable snapper-timeline.timer
+enable snapper-cleanup.timer

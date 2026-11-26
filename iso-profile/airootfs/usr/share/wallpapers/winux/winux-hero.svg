@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#041226"/>
+      <stop offset="50%" stop-color="#08274d"/>
+      <stop offset="100%" stop-color="#020b18"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0078d7" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <polygon points="880,220 1240,160 1240,510 880,510" fill="url(#beam)"/>
+  <polygon points="1270,155 1660,95 1660,510 1270,510" fill="url(#beam)"/>
+  <polygon points="880,540 1240,540 1240,890 880,830" fill="url(#beam)"/>
+  <polygon points="1270,540 1660,540 1660,955 1270,895" fill="url(#beam)"/>
+</svg>

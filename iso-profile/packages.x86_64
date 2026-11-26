@@ -1,0 +1,62 @@
+# WINUX base package list for archiso (x86_64)
+# Uses [cachyos] and [multilib] from iso-profile/pacman.conf.
+
+# --- Core System & Kernel (Linux 6.14+ with BORE & /dev/ntsync) ---
+base
+linux-cachyos
+linux-cachyos-headers
+linux-firmware
+mkinitcpio
+cachyos-keyring
+cachyos-mirrorlist
+btrfs-progs
+snapper
+zram-generator
+networkmanager
+sudo
+python
+git
+
+# --- Audio (PipeWire) ---
+pipewire
+pipewire-alsa
+pipewire-pulse
+pipewire-jack
+wireplumber
+
+# --- KDE Plasma 6 (Wayland) Desktop ---
+plasma-meta
+sddm
+xdg-desktop-portal-kde
+dolphin
+konsole
+kate
+ark
+
+# --- GPU & Vulkan Stack (AMD / Intel + 32-bit multilib) ---
+mesa
+vulkan-icd-loader
+vulkan-radeon
+vulkan-intel
+vulkan-tools
+lib32-mesa
+lib32-vulkan-icd-loader
+lib32-vulkan-radeon
+lib32-vulkan-intel
+
+# --- Windows Compatibility & Gaming ---
+wine-staging
+winetricks
+icoutils
+pyside6
+gamescope
+gamemode
+lib32-gamemode
+mangohud
+lib32-mangohud
+flatpak
+steam
+umu-launcher
+# proton-cachyos provides CachyOS + Proton-GE patches directly from [cachyos]
+# (proton-ge-custom-bin is AUR-only and can be installed post-boot or via local repo)
+proton-cachyos

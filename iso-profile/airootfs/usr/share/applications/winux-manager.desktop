@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=WINUX Compatibility Manager
+Comment=Manage Windows .exe prefixes, runtimes, and Start Menu shortcuts
+Exec=/usr/local/bin/winux-manager
+Icon=preferences-system-windows
+Terminal=false
+Type=Application
+Categories=System;Settings;
+Keywords=wine;proton;windows;exe;prefix;gaming;

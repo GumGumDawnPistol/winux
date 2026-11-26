@@ -1,0 +1,248 @@
+#!/usr/bin/env python3
+"""WINUX Compatibility Manager (Qt6/PySide6) for Windows prefixes, runtimes, and shortcuts."""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+
+_LIB_DIR = Path(__file__).resolve().parent.parent / "lib"
+if str(_LIB_DIR) not in sys.path:
+    sys.path.insert(0, str(_LIB_DIR))
+
+from winux_compat.config import COMMON_RUNTIMES, PrefixConfig  # noqa: E402
+from winux_compat.prefixes import PrefixManager  # noqa: E402
+from winux_compat.runner import has_ntsync  # noqa: E402
+from winux_compat.shortcuts import generate_shortcuts_for_prefix  # noqa: E402
+
+try:
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import (
+        QApplication,
+        QCheckBox,
+        QComboBox,
+        QFileDialog,
+        QFormLayout,
+        QGroupBox,
+        QHBoxLayout,
+        QInputDialog,
+        QLabel,
+        QListWidget,
+        QMainWindow,
+        QMessageBox,
+        QPushButton,
+        QVBoxLayout,
+        QWidget,
+    )
+except ImportError as exc:  # pragma: no cover - GUI dependency checked on target OS
+    print(f"winux-manager requires PySide6: {exc}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+class WinuxManagerWindow(QMainWindow):
+    """Main window for managing WINUX Wine/Proton prefixes and shortcuts."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.manager = PrefixManager()
+        self.setWindowTitle("WINUX Windows Compatibility Manager")
+        self.resize(840, 520)
+
+        root = QWidget()
+        self.setCentralWidget(root)
+        outer = QVBoxLayout(root)
+
+        ntsync_label = "Active (/dev/ntsync)" if has_ntsync() else "Fallback (WINEFSYNC)"
+        status = QLabel(
+            f"<b>Kernel Sync:</b> {ntsync_label} &nbsp;|&nbsp; "
+            "<b>Note:</b> User-space EAC/BattlEye work when enabled by devs; kernel anti-cheats are unsupported."
+        )
+        status.setWordWrap(True)
+        outer.addWidget(status)
+
+        body = QHBoxLayout()
+        outer.addLayout(body, stretch=1)
+
+        # Left column: prefixes & primary actions
+        left = QVBoxLayout()
+        self.prefix_list = QListWidget()
+        self.prefix_list.currentItemChanged.connect(self._on_prefix_selected)
+        left.addWidget(QLabel("<b>Windows Prefixes</b>"))
+        left.addWidget(self.prefix_list, stretch=1)
+
+        prefix_btns = QHBoxLayout()
+        btn_new = QPushButton("New Prefix")
+        btn_new.clicked.connect(self._create_prefix)
+        btn_del = QPushButton("Delete")
+        btn_del.clicked.connect(self._delete_prefix)
+        prefix_btns.addWidget(btn_new)
+        prefix_btns.addWidget(btn_del)
+        left.addLayout(prefix_btns)
+
+        btn_run_exe = QPushButton("Run .exe / .msi Installer...")
+        btn_run_exe.clicked.connect(self._run_exe_dialog)
+        left.addWidget(btn_run_exe)
+        body.addLayout(left, stretch=1)
+
+        # Right column: selected prefix settings, runtimes, and shortcuts
+        right = QVBoxLayout()
+        settings_box = QGroupBox("Prefix Configuration")
+        form = QFormLayout(settings_box)
+
+        self.mode_combo = QComboBox()
+        self.mode_combo.addItems(["app", "game"])
+        self.runner_combo = QComboBox()
+        self.runner_combo.addItems(["auto", "umu", "wine"])
+        self.chk_gamemode = QCheckBox("Enable GameMode")
+        self.chk_gamescope = QCheckBox("Enable Gamescope fullscreen")
+        self.chk_mangohud = QCheckBox("Show MangoHud FPS overlay")
+        self.chk_ntsync = QCheckBox("Use kernel ntsync when available")
+
+        form.addRow("Profile Mode:", self.mode_combo)
+        form.addRow("Runner:", self.runner_combo)
+        form.addRow("", self.chk_gamemode)
+        form.addRow("", self.chk_gamescope)
+        form.addRow("", self.chk_mangohud)
+        form.addRow("", self.chk_ntsync)
+
+        btn_save = QPushButton("Save Prefix Settings")
+        btn_save.clicked.connect(self._save_selected)
+        form.addRow(btn_save)
+        right.addWidget(settings_box)
+
+        runtimes_box = QGroupBox("Windows Runtimes & Start Menu Integration")
+        rt_layout = QVBoxLayout(runtimes_box)
+        self.deps_label = QLabel("Installed runtimes: none")
+        self.deps_label.setWordWrap(True)
+        rt_layout.addWidget(self.deps_label)
+
+        rt_buttons = QHBoxLayout()
+        for verb in ("vcrun2022", "corefonts", "dotnet48", "dxvk"):
+            btn = QPushButton(f"Install {verb}")
+            btn.setToolTip(COMMON_RUNTIMES[verb])
+            btn.clicked.connect(lambda _checked=False, v=verb: self._install_runtime(v))
+            rt_buttons.addWidget(btn)
+        rt_layout.addLayout(rt_buttons)
+
+        btn_shortcuts = QPushButton("Scan Prefix & Create Start Menu Shortcuts")
+        btn_shortcuts.clicked.connect(self._scan_shortcuts)
+        rt_layout.addWidget(btn_shortcuts)
+        right.addWidget(runtimes_box)
+
+        body.addLayout(right, stretch=2)
+        self._refresh_prefixes()
+
+    def _selected_name(self) -> str | None:
+        item = self.prefix_list.currentItem()
+        return item.text() if item else None
+
+    def _refresh_prefixes(self, select: str | None = None) -> None:
+        self.prefix_list.clear()
+        for _path, cfg in self.manager.list_prefixes():
+            self.prefix_list.addItem(cfg.name)
+        if select:
+            matches = self.prefix_list.findItems(select, Qt.MatchExactly)
+            if matches:
+                self.prefix_list.setCurrentItem(matches[0])
+        elif self.prefix_list.count() > 0:
+            self.prefix_list.setCurrentRow(0)
+
+    def _on_prefix_selected(self) -> None:
+        name = self._selected_name()
+        if not name:
+            return
+        prefix_dir = self.manager.prefix_path(name)
+        cfg = PrefixConfig.load(prefix_dir, default_name=name)
+        self.mode_combo.setCurrentText(cfg.mode)
+        self.runner_combo.setCurrentText(cfg.runner)
+        self.chk_gamemode.setChecked(cfg.gamemode)
+        self.chk_gamescope.setChecked(cfg.gamescope)
+        self.chk_mangohud.setChecked(cfg.mangohud)
+        self.chk_ntsync.setChecked(cfg.ntsync)
+        deps_text = ", ".join(cfg.installed_deps) if cfg.installed_deps else "none"
+        self.deps_label.setText(f"Installed runtimes: {deps_text}")
+
+    def _create_prefix(self) -> None:
+        name, ok = QInputDialog.getText(self, "New Prefix", "Prefix name (e.g. office-apps or cyber-game):")
+        if not ok or not name.strip():
+            return
+        _path, cfg = self.manager.ensure_prefix(name)
+        self._refresh_prefixes(select=cfg.name)
+
+    def _delete_prefix(self) -> None:
+        name = self._selected_name()
+        if not name:
+            return
+        confirm = QMessageBox.question(
+            self,
+            "Delete Prefix",
+            f"Delete prefix '{name}' and all Windows files inside it?",
+        )
+        if confirm == QMessageBox.Yes:
+            self.manager.remove_prefix(name)
+            self._refresh_prefixes()
+
+    def _save_selected(self) -> None:
+        name = self._selected_name()
+        if not name:
+            return
+        prefix_dir = self.manager.prefix_path(name)
+        cfg = PrefixConfig.load(prefix_dir, default_name=name)
+        cfg.mode = "game" if self.mode_combo.currentText() == "game" else "app"
+        cfg.runner = self.runner_combo.currentText()  # type: ignore[assignment]
+        cfg.gamemode = self.chk_gamemode.isChecked()
+        cfg.gamescope = self.chk_gamescope.isChecked()
+        cfg.mangohud = self.chk_mangohud.isChecked()
+        cfg.ntsync = self.chk_ntsync.isChecked()
+        cfg.save(prefix_dir)
+        QMessageBox.information(self, "Saved", f"Saved configuration for '{name}'.")
+
+    def _install_runtime(self, verb: str) -> None:
+        name = self._selected_name()
+        if not name:
+            return
+        try:
+            installed = self.manager.install_dependencies(name, [verb])
+            self._on_prefix_selected()
+            msg = f"Installed {verb} into '{name}'." if installed else f"{verb} is already installed."
+            QMessageBox.information(self, "Runtime Setup", msg)
+        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+            QMessageBox.warning(self, "Runtime Error", str(exc))
+
+    def _scan_shortcuts(self) -> None:
+        name = self._selected_name()
+        if not name:
+            return
+        prefix_dir, cfg = self.manager.ensure_prefix(name)
+        created = generate_shortcuts_for_prefix(prefix_dir, cfg)
+        QMessageBox.information(
+            self,
+            "Shortcuts Updated",
+            f"Generated {len(created)} Start Menu shortcut(s) for '{name}'.",
+        )
+
+    def _run_exe_dialog(self) -> None:
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Windows Executable or Installer",
+            str(Path.home()),
+            "Windows Binaries (*.exe *.msi);;All Files (*)",
+        )
+        if not file_path:
+            return
+        name = self._selected_name() or "default"
+        subprocess.Popen(["/usr/local/bin/winux-exec", "--prefix", name, file_path])
+        self._refresh_prefixes(select=name)
+
+
+def main() -> int:
+    """Launch the WINUX Compatibility Manager Qt application."""
+    app = QApplication(sys.argv)
+    window = WinuxManagerWindow()
+    window.show()
+    return app.exec()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

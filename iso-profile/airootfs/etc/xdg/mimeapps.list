@@ -1,0 +1,4 @@
+[Default Applications]
+application/x-ms-dos-executable=winux-exec.desktop
+application/x-msi=winux-exec.desktop
+application/x-msdownload=winux-exec.desktop

@@ -1,0 +1,2 @@
+# Allow WINUX live session user passwordless sudo for installation & testing
+winux ALL=(ALL:ALL) NOPASSWD: ALL

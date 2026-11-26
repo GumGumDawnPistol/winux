@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""WINUX Windows executable (.exe / .msi) dispatcher and prefix CLI."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from dataclasses import asdict
+from pathlib import Path
+
+_LIB_DIR = Path(__file__).resolve().parent.parent / "lib"
+if str(_LIB_DIR) not in sys.path:
+    sys.path.insert(0, str(_LIB_DIR))
+
+from winux_compat import (  # noqa: E402
+    PrefixManager,
+    generate_shortcuts_for_prefix,
+    inspect_pe,
+    launch_target,
+    sanitize_prefix_name,
+)
+
+
+def _derive_prefix_name(target: Path, explicit_prefix: str | None) -> str:
+    if explicit_prefix:
+        return sanitize_prefix_name(explicit_prefix)
+    return sanitize_prefix_name(target.stem)
+
+
+def main() -> int:
+    """Parse CLI flags and dispatch either management commands or binary execution."""
+    parser = argparse.ArgumentParser(
+        prog="winux-exec",
+        description="Run Windows .exe/.msi files and manage WINUX prefixes.",
+    )
+    parser.add_argument("target", nargs="?", help="Path to a Windows .exe or .msi file")
+    parser.add_argument("args", nargs=argparse.REMAINDER, help="Arguments passed to the Windows executable")
+    parser.add_argument("--prefix", help="Prefix name under ~/.local/share/winux/prefixes")
+    parser.add_argument("--game", action="store_true", help="Force game mode (umu-launcher + GameMode)")
+    parser.add_argument("--gamescope", action="store_true", help="Wrap game launch with Gamescope fullscreen")
+    parser.add_argument("--mangohud", action="store_true", help="Enable MangoHud FPS/frametime overlay")
+    parser.add_argument("--runner", choices=["auto", "umu", "wine"], help="Override runner for this launch")
+    parser.add_argument("--list", action="store_true", help="List configured WINUX prefixes")
+    parser.add_argument("--inspect", metavar="FILE", help="Inspect PE headers and classification without running")
+    parser.add_argument("--deps", nargs="+", metavar="VERB", help="Install winetricks dependencies into --prefix")
+    parser.add_argument("--scan-shortcuts", action="store_true", help="Generate .desktop shortcuts for --prefix")
+
+    parsed = parser.parse_args()
+    manager = PrefixManager()
+
+    if parsed.list:
+        prefixes = manager.list_prefixes()
+        if not prefixes:
+            print("No WINUX prefixes configured yet.")
+            return 0
+        for path, cfg in prefixes:
+            deps = ", ".join(cfg.installed_deps) if cfg.installed_deps else "none"
+            print(f"{cfg.name}\tmode={cfg.mode}\trunner={cfg.runner}\tdeps={deps}\tpath={path}")
+        return 0
+
+    if parsed.inspect:
+        target = Path(parsed.inspect).expanduser().resolve()
+        if not target.is_file():
+            print(f"winux-exec: file not found: {target}", file=sys.stderr)
+            return 1
+        info = inspect_pe(target)
+        print(json.dumps({**asdict(info), "path": str(info.path)}, indent=2))
+        return 0
+
+    if parsed.deps:
+        prefix_name = sanitize_prefix_name(parsed.prefix or "default")
+        try:
+            installed = manager.install_dependencies(prefix_name, parsed.deps)
+        except FileNotFoundError as exc:
+            print(f"winux-exec: {exc}", file=sys.stderr)
+            return 127
+        print(f"Installed into '{prefix_name}': {', '.join(installed) or 'already satisfied'}")
+        return 0
+
+    if parsed.scan_shortcuts:
+        prefix_name = sanitize_prefix_name(parsed.prefix or "default")
+        prefix_dir, cfg = manager.ensure_prefix(prefix_name)
+        created = generate_shortcuts_for_prefix(prefix_dir, cfg)
+        for shortcut in created:
+            print(shortcut)
+        if not created:
+            print(f"No executables discovered in prefix '{prefix_name}'.")
+        return 0
+
+    if not parsed.target:
+        parser.print_help()
+        return 2
+
+    target = Path(parsed.target).expanduser().resolve()
+    if not target.is_file():
+        print(f"winux-exec: target not found: {target}", file=sys.stderr)
+        return 1
+
+    info = inspect_pe(target)
+    inferred_mode = "game" if (parsed.game or info.classification == "game") else "app"
+    prefix_name = _derive_prefix_name(target, parsed.prefix)
+    prefix_dir, cfg = manager.ensure_prefix(prefix_name, mode=inferred_mode)
+
+    if parsed.game:
+        cfg.mode = "game"
+    if parsed.gamescope:
+        cfg.gamescope = True
+    if parsed.mangohud:
+        cfg.mangohud = True
+    if parsed.runner:
+        cfg.runner = parsed.runner
+
+    try:
+        return launch_target(target, parsed.args, prefix_dir, cfg)
+    except FileNotFoundError as exc:
+        print(f"winux-exec: {exc}", file=sys.stderr)
+        return 127
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

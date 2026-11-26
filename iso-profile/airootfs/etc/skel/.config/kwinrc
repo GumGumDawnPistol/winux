@@ -1,0 +1,9 @@
+[Windows]
+BorderlessMaximizedWindows=true
+Placement=Centered
+
+[org.kde.kdecoration2]
+ButtonsOnLeft=M
+ButtonsOnRight=IAX
+library=org.kde.breeze
+theme=Breeze

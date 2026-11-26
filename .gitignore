@@ -1,0 +1,5 @@
+build/
+*.iso
+*.log
+__pycache__/
+*.pyc

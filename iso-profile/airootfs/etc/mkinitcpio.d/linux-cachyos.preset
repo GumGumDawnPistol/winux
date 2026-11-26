@@ -1,0 +1,9 @@
+# mkinitcpio preset file for linux-cachyos on the WINUX Live ISO
+
+ALL_config="/etc/mkinitcpio.conf"
+ALL_kver="/boot/vmlinuz-linux-cachyos"
+
+PRESETS=('archiso')
+
+archiso_config="/etc/mkinitcpio.conf.d/archiso.conf"
+archiso_image="/boot/initramfs-linux-cachyos.img"

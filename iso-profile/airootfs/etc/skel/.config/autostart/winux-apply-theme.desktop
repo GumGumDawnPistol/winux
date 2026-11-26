@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=WINUX Windows 10 Theme Setup
+Comment=Apply the default WINUX Windows 10 Plasma 6 taskbar and wallpaper on first login
+Exec=/usr/local/bin/winux-apply-theme
+Type=Application
+X-KDE-autostart-phase=2
+OnlyShowIn=KDE;
+NoDisplay=true

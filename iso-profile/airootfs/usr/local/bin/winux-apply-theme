@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Apply WINUX Windows 10 KDE Plasma 6 taskbar, theme, and wallpaper layout once per user."""
+
+from __future__ import annotations
+
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+DEFAULT_LAYOUT_JS = Path("/usr/local/share/winux/plasma-win10-layout.js")
+
+
+def marker_path() -> Path:
+    """Return the XDG config marker file path tracking whether the theme was applied."""
+    xdg_config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    return xdg_config / "winux" / "theme-applied"
+
+
+def find_qdbus(which_fn=shutil.which) -> str | None:
+    """Locate Qt6/Plasma D-Bus CLI tool (qdbus6, qdbus-qt6, or qdbus)."""
+    for candidate in ("qdbus6", "qdbus-qt6", "qdbus"):
+        found = which_fn(candidate)
+        if found:
+            return found
+    return None
+
+
+def apply_layout(
+    *,
+    layout_js: Path = DEFAULT_LAYOUT_JS,
+    marker: Path | None = None,
+    force: bool = False,
+    dry_run: bool = False,
+    which_fn=shutil.which,
+    run_fn=subprocess.run,
+) -> int:
+    """Evaluate plasma-win10-layout.js in PlasmaShell unless already applied."""
+    marker_file = marker or marker_path()
+    if marker_file.exists() and not force:
+        return 0
+
+    if not layout_js.is_file():
+        print(f"winux-apply-theme: layout script not found: {layout_js}", file=sys.stderr)
+        return 1
+
+    qdbus = find_qdbus(which_fn=which_fn) or ("qdbus6" if dry_run else None)
+    if not qdbus:
+        print("winux-apply-theme: qdbus6/qdbus not found", file=sys.stderr)
+        return 127
+
+    script_text = layout_js.read_text(encoding="utf-8")
+    cmd = [
+        qdbus,
+        "org.kde.plasmashell",
+        "/PlasmaShell",
+        "org.kde.PlasmaShell.evaluateScript",
+        script_text,
+    ]
+    if dry_run:
+        print("DRY-RUN:", " ".join(cmd[:4]), "<plasma-win10-layout.js>")
+        return 0
+
+    res = run_fn(cmd, check=False)
+    if res.returncode != 0:
+        return res.returncode
+
+    marker_file.parent.mkdir(parents=True, exist_ok=True)
+    marker_file.write_text("applied\n", encoding="utf-8")
+    return 0
+
+
+def main() -> int:
+    """CLI entrypoint for applying or resetting the WINUX Windows 10 Plasma layout."""
+    parser = argparse.ArgumentParser(prog="winux-apply-theme")
+    parser.add_argument("--force", action="store_true", help="Re-apply layout even if already applied")
+    parser.add_argument("--dry-run", action="store_true", help="Print D-Bus call without modifying Plasma")
+    parser.add_argument("--layout", default=str(DEFAULT_LAYOUT_JS), help="Path to Plasma layout JS")
+    parsed = parser.parse_args()
+    return apply_layout(layout_js=Path(parsed.layout), force=parsed.force, dry_run=parsed.dry_run)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

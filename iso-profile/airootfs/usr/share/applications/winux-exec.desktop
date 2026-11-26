@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=WINUX Windows App Launcher
+Comment=Run Windows .exe and .msi files via WINUX translation layer
+Exec=/usr/local/bin/winux-exec %f
+Terminal=false
+Type=Application
+MimeType=application/x-ms-dos-executable;application/x-msi;application/x-msdownload;
+Categories=System;Emulator;
+NoDisplay=true

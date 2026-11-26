@@ -1,0 +1,17 @@
+{
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.associations": {
+    "*.x86_64": "plaintext",
+    "winux-exec": "python",
+    "winux-manager": "python",
+    "winux-apply-theme": "python",
+    "winux-welcome": "python",
+    "winux-postinstall": "shellscript",
+    "profiledef.sh": "shellscript"
+  },
+  "python.analysis.extraPaths": [
+    "iso-profile/airootfs/usr/local/lib"
+  ]
+}

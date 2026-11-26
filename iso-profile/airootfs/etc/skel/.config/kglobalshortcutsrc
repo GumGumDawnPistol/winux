@@ -1,0 +1,19 @@
+[krunner][Global Shortcuts]
+Run Command=Meta+R;Alt+F2;Search
+
+[kwin][Global Shortcuts]
+Overview=Meta+Tab
+Show Desktop=Meta+D
+Window Maximize=Meta+Up
+Window Minimize=Meta+Down
+Window Quick Tile Left=Meta+Left
+Window Quick Tile Right=Meta+Right
+
+[org.kde.dolphin.desktop][Global Shortcuts]
+_launch=Meta+E
+
+[org.kde.plasma-systemmonitor.desktop][Global Shortcuts]
+_launch=Ctrl+Shift+Esc
+
+[ksmserver][Global Shortcuts]
+Lock Session=Meta+L;Screensaver

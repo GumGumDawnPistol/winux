@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Post-install target configuration run inside the installed WINUX system by Calamares.
+
+# 1. Remove Live ISO SDDM autologin so installed systems require user login
+rm -f /etc/sddm.conf.d/autologin.conf
+
+# 2. Remove Live ISO installer shortcut from skeleton/user desktop if copied
+rm -f /home/*/Desktop/install-winux.desktop /etc/skel/Desktop/install-winux.desktop
+
+# 3. Initialize Snapper config for Btrfs root subvolume when running on Btrfs
+if findmnt -n -o FSTYPE / 2>/dev/null | grep -qx "btrfs"; then
+  if command -v snapper >/dev/null 2>&1 && [[ ! -f /etc/snapper/configs/root ]]; then
+    snapper --no-dbus -c root create-config / || true
+  fi
+fi
+
+# 4. Ensure kernel binfmt_misc and ntsync services/modules are preset
+systemctl preset-all --preset-mode=enable-only || true

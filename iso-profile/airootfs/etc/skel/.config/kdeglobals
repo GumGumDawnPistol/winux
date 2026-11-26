@@ -1,0 +1,16 @@
+[General]
+ColorScheme=BreezeDark
+Name=WINUX Windows 10 Dark
+shadeSortColumn=true
+
+[KDE]
+LookAndFeelPackage=org.kde.breezedark.desktop
+SingleClick=false
+ShowDeleteCommand=true
+
+[WM]
+activeBackground=30,30,34
+activeForeground=255,255,255
+frame=0,120,215
+inactiveBackground=43,43,48
+inactiveForeground=170,170,178

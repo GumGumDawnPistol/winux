@@ -1,0 +1,55 @@
+name: Build WINUX ISO
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Python & Config Integrity Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run unit and integrity tests
+        run: python -B -m unittest discover -s tests -v
+
+  build-iso:
+    name: Build Bootable WINUX ISO
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Free runner disk space for archiso squashfs build
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache
+          df -h
+
+      - name: Build WINUX ISO in Arch Linux container
+        run: |
+          chmod +x scripts/build-iso.sh scripts/test-qemu.sh
+          ./scripts/build-iso.sh --container
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd build/out
+          sha256sum winux-*.iso > SHA256SUMS.txt
+          ls -lh winux-*.iso SHA256SUMS.txt
+
+      - name: Upload WINUX ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: winux-iso-x86_64
+          path: |
+            build/out/winux-*.iso
+            build/out/SHA256SUMS.txt
+          retention-days: 14

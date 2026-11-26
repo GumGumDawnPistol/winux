@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=WINUX Welcome Wizard
+Comment=First-boot GPU driver, Flathub, and Windows runtime setup
+Exec=/usr/local/bin/winux-welcome
+Icon=preferences-desktop-display
+Terminal=false
+Type=Application
+X-KDE-autostart-phase=2
+OnlyShowIn=KDE;

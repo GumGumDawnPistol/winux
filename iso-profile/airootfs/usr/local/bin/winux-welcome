@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""WINUX First-Boot Welcome & Driver/Compatibility Setup Wizard (PySide6)."""
+
+from __future__ import annotations
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+_LIB_DIR = Path(__file__).resolve().parent.parent / "lib"
+if str(_LIB_DIR) not in sys.path:
+    sys.path.insert(0, str(_LIB_DIR))
+
+from winux_setup import (  # noqa: E402
+    build_setup_commands,
+    detect_hardware,
+    load_first_boot_state,
+    mark_first_boot_complete,
+)
+
+try:
+    from PySide6.QtWidgets import (
+        QApplication,
+        QCheckBox,
+        QGroupBox,
+        QHBoxLayout,
+        QLabel,
+        QMainWindow,
+        QMessageBox,
+        QPushButton,
+        QVBoxLayout,
+        QWidget,
+    )
+except ImportError as exc:  # pragma: no cover - GUI dependency checked on target OS
+    print(f"winux-welcome requires PySide6: {exc}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+class WinuxWelcomeWindow(QMainWindow):
+    """First-boot setup wizard for GPU drivers, Flathub, gaming tools, and .exe runtimes."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.hw = detect_hardware()
+        self.setWindowTitle("Welcome to WINUX")
+        self.resize(640, 420)
+
+        root = QWidget()
+        self.setCentralWidget(root)
+        layout = QVBoxLayout(root)
+
+        gpus = ", ".join(self.hw.gpu_vendors) if self.hw.gpu_vendors else "unknown"
+        ntsync = "Active (/dev/ntsync)" if self.hw.ntsync_available else "Fallback (WINEFSYNC)"
+        layout.addWidget(QLabel("<h2>Welcome to WINUX</h2>"))
+        layout.addWidget(
+            QLabel(
+                f"<b>Detected GPU(s):</b> {gpus}<br>"
+                f"<b>Kernel Windows Sync:</b> {ntsync}<br>"
+                "Double-click any <code>.exe</code> or <code>.msi</code> file to run it natively via Wine/Proton."
+            )
+        )
+
+        opts = QGroupBox("Recommended First-Boot Setup")
+        opts_layout = QVBoxLayout(opts)
+        self.chk_nvidia = QCheckBox("Install NVIDIA proprietary driver + 32-bit Vulkan libraries")
+        self.chk_nvidia.setChecked("nvidia" in self.hw.gpu_vendors)
+        self.chk_nvidia.setEnabled("nvidia" in self.hw.gpu_vendors)
+
+        self.chk_flathub = QCheckBox("Enable Flathub for Linux desktop & gaming apps")
+        self.chk_flathub.setChecked(True)
+
+        self.chk_gaming = QCheckBox("Install Heroic Games Launcher (Epic/GOG/Amazon) & ProtonUp-Qt")
+        self.chk_gaming.setChecked(True)
+
+        self.chk_runtimes = QCheckBox("Bootstrap default Windows prefix (vcrun2022 + corefonts)")
+        self.chk_runtimes.setChecked(True)
+
+        opts_layout.addWidget(self.chk_nvidia)
+        opts_layout.addWidget(self.chk_flathub)
+        opts_layout.addWidget(self.chk_gaming)
+        opts_layout.addWidget(self.chk_runtimes)
+        layout.addWidget(opts)
+
+        btns = QHBoxLayout()
+        btn_skip = QPushButton("Skip for Now")
+        btn_skip.clicked.connect(self._skip)
+        btn_apply = QPushButton("Apply Selected Setup")
+        btn_apply.clicked.connect(self._apply)
+        btns.addStretch(1)
+        btns.addWidget(btn_skip)
+        btns.addWidget(btn_apply)
+        layout.addLayout(btns)
+
+    def _skip(self) -> None:
+        mark_first_boot_complete([])
+        self.close()
+
+    def _apply(self) -> None:
+        tasks = build_setup_commands(
+            self.hw,
+            enable_flathub=self.chk_flathub.isChecked(),
+            install_gaming_apps=self.chk_gaming.isChecked(),
+            bootstrap_win_runtimes=self.chk_runtimes.isChecked(),
+            install_nvidia=self.chk_nvidia.isChecked(),
+        )
+        completed: list[str] = []
+        for task in tasks:
+            res = subprocess.run(task.command, check=False)
+            if res.returncode != 0:
+                QMessageBox.warning(self, "Setup Incomplete", f"Task failed: {task.title}")
+                return
+            completed.append(task.task_id)
+
+        mark_first_boot_complete(completed)
+        QMessageBox.information(self, "Setup Complete", "WINUX first-boot configuration finished.")
+        self.close()
+
+
+def main() -> int:
+    """Launch the first-boot wizard unless already completed or running in Live ISO."""
+    parser = argparse.ArgumentParser(prog="winux-welcome")
+    parser.add_argument("--force", action="store_true", help="Open wizard even if already completed or on Live ISO")
+    parsed = parser.parse_args()
+
+    hw = detect_hardware()
+    state = load_first_boot_state()
+    if not parsed.force and (hw.is_live_session or state.get("completed")):
+        return 0
+
+    app = QApplication(sys.argv)
+    win = WinuxWelcomeWindow()
+    win.show()
+    return app.exec()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

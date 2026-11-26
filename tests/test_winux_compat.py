@@ -12,7 +12,7 @@ LIB_DIR = Path(__file__).resolve().parent.parent / "iso-profile" / "airootfs" / 
 sys.path.insert(0, str(LIB_DIR))
 
 from winux_compat.config import PrefixConfig, sanitize_prefix_name  # noqa: E402
-from winux_compat.detector import classify_target, inspect_pe  # noqa: E402
+from winux_compat.detector import classify_target, detect_anticheat, inspect_pe  # noqa: E402
 from winux_compat.prefixes import PrefixManager  # noqa: E402
 from winux_compat.runner import build_command, build_environment  # noqa: E402
 from winux_compat.shortcuts import generate_shortcuts_for_prefix, scan_prefix_executables  # noqa: E402
@@ -146,6 +146,37 @@ class WinuxCompatTests(unittest.TestCase):
             self.assertIn("Name=NoteApp", desktop_text)
             self.assertIn('Exec=/usr/local/bin/winux-exec --prefix "office"', desktop_text)
             self.assertIn("Categories=Utility;", desktop_text)
+
+    def test_detect_anticheat_distinguishes_kernel_blockers_and_optin(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            clean_dir = root / "clean_app"
+            clean_dir.mkdir()
+            clean_exe = clean_dir / "App.exe"
+            _make_minimal_pe(clean_exe)
+            self.assertIsNone(detect_anticheat(clean_exe))
+
+            val_dir = root / "shooter"
+            val_dir.mkdir()
+            val_exe = val_dir / "Game.exe"
+            _make_minimal_pe(val_exe)
+            (val_dir / "vgk.sys").write_bytes(b"")
+            finding = detect_anticheat(val_exe)
+            self.assertIsNotNone(finding)
+            assert finding is not None
+            self.assertTrue(finding.blocking)
+            self.assertEqual(finding.name, "Riot Vanguard")
+
+            eac_dir = root / "coop" / "EasyAntiCheat"
+            eac_dir.mkdir(parents=True)
+            coop_exe = root / "coop" / "Coop.exe"
+            _make_minimal_pe(coop_exe)
+            (eac_dir / "EasyAntiCheat.sys").write_bytes(b"")
+            eac_finding = detect_anticheat(coop_exe)
+            self.assertIsNotNone(eac_finding)
+            assert eac_finding is not None
+            self.assertFalse(eac_finding.blocking)
+            self.assertEqual(eac_finding.name, "Easy Anti-Cheat")
 
 
 if __name__ == "__main__":

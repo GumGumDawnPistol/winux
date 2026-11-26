@@ -25,12 +25,29 @@ rm -f /etc/sddm.conf.d/autologin.conf
 # 2. Remove Live ISO installer shortcut from skeleton/user desktop if copied
 rm -f /home/*/Desktop/install-winux.desktop /etc/skel/Desktop/install-winux.desktop
 
-# 3. Initialize Snapper config for Btrfs root subvolume when running on Btrfs
+# 3. Initialize Snapper safely around Calamares's pre-mounted /@snapshots subvolume
 if findmnt -n -o FSTYPE / 2>/dev/null | grep -qx "btrfs"; then
   if command -v snapper >/dev/null 2>&1 && [[ ! -f /etc/snapper/configs/root ]]; then
+    if mountpoint -q /.snapshots 2>/dev/null; then
+      umount /.snapshots
+    fi
     snapper --no-dbus -c root create-config / || true
+    if command -v btrfs >/dev/null 2>&1 && btrfs subvolume show /.snapshots >/dev/null 2>&1; then
+      btrfs subvolume delete /.snapshots || true
+    else
+      rmdir /.snapshots 2>/dev/null || true
+    fi
+    mkdir -p /.snapshots
+    mount /.snapshots 2>/dev/null || true
+    chmod 750 /.snapshots
+  fi
+
+  # Disable Btrfs Copy-on-Write on LLM model directory for raw NVMe throughput
+  if [[ -d /var/lib/winux-models ]] && command -v chattr >/dev/null 2>&1; then
+    chattr +C /var/lib/winux-models || true
   fi
 fi
 
-# 4. Ensure kernel binfmt_misc, display manager, and ntsync presets are enabled
+# 4. Ensure kernel binfmt_misc, display manager, and snapper timers are enabled
 systemctl preset-all --preset-mode=enable-only || true
+systemctl enable snapper-timeline.timer snapper-cleanup.timer || true

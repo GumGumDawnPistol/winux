@@ -35,6 +35,8 @@ cachyos-calamares
 xorg-xhost
 sudo
 python
+python-pip
+uv
 git
 curl
 wget

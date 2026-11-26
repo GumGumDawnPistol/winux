@@ -17,6 +17,7 @@ from winux_setup import (  # noqa: E402
     detect_hardware,
     load_first_boot_state,
     mark_first_boot_complete,
+    write_igpu_kwin_env,
 )
 
 try:
@@ -76,10 +77,20 @@ class WinuxWelcomeWindow(QMainWindow):
         self.chk_runtimes = QCheckBox("Bootstrap default Windows prefix (vcrun2022 + corefonts)")
         self.chk_runtimes.setChecked(True)
 
+        self.chk_igpu_desktop = QCheckBox("Zero-VRAM-Tax: Run Plasma desktop on iGPU (free NVIDIA VRAM)")
+        has_hybrid = "nvidia" in self.hw.gpu_vendors and any(v in self.hw.gpu_vendors for v in ("intel", "amd"))
+        self.chk_igpu_desktop.setChecked(has_hybrid)
+        self.chk_igpu_desktop.setEnabled(has_hybrid)
+
+        self.chk_ai_stack = QCheckBox("Install Local AI Compute Stack (Ollama / CUDA when NVIDIA present)")
+        self.chk_ai_stack.setChecked(False)
+
         opts_layout.addWidget(self.chk_nvidia)
         opts_layout.addWidget(self.chk_flathub)
         opts_layout.addWidget(self.chk_gaming)
         opts_layout.addWidget(self.chk_runtimes)
+        opts_layout.addWidget(self.chk_igpu_desktop)
+        opts_layout.addWidget(self.chk_ai_stack)
         layout.addWidget(opts)
 
         btns = QHBoxLayout()
@@ -97,12 +108,16 @@ class WinuxWelcomeWindow(QMainWindow):
         self.close()
 
     def _apply(self) -> None:
+        if self.chk_igpu_desktop.isChecked():
+            write_igpu_kwin_env()
+
         tasks = build_setup_commands(
             self.hw,
             enable_flathub=self.chk_flathub.isChecked(),
             install_gaming_apps=self.chk_gaming.isChecked(),
             bootstrap_win_runtimes=self.chk_runtimes.isChecked(),
             install_nvidia=self.chk_nvidia.isChecked(),
+            install_ai_stack=self.chk_ai_stack.isChecked(),
         )
         completed: list[str] = []
         for task in tasks:

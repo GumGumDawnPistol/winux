@@ -29,12 +29,32 @@ class PrefixManager:
         safe = sanitize_prefix_name(name)
         prefix_dir = self.prefix_path(safe)
         existed = (prefix_dir / "winux-prefix.json").is_file()
+        is_new_dir = not prefix_dir.exists()
+        prefix_dir.mkdir(parents=True, exist_ok=True)
+        if is_new_dir:
+            self._apply_nodatacow(prefix_dir)
         cfg = PrefixConfig.load(prefix_dir, default_name=safe)
         if not existed and mode is not None:
             cfg.mode = mode
             cfg.gamescope = mode == "game"
         cfg.save(prefix_dir)
         return prefix_dir, cfg
+
+    @staticmethod
+    def _apply_nodatacow(prefix_dir: Path) -> None:
+        """Best-effort chattr +C on empty prefix dirs to avoid Btrfs CoW bloat."""
+        chattr = shutil.which("chattr")
+        if not chattr:
+            return
+        try:
+            subprocess.run(
+                [chattr, "+C", str(prefix_dir)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+        except OSError:
+            pass
 
     def list_prefixes(self) -> list[tuple[Path, PrefixConfig]]:
         """Return all prefixes currently stored under self.root."""

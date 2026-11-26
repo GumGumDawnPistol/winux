@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .config import PrefixConfig, default_state_dir
-from .detector import inspect_pe
+from .detector import detect_anticheat, inspect_pe
 
 
 def has_ntsync(dev_path: Path = Path("/dev/ntsync")) -> bool:
@@ -116,6 +116,19 @@ def launch_target(
 ) -> int:
     """Inspect, configure, log, and execute a Windows binary."""
     inspect_pe(target)
+    ac = detect_anticheat(target)
+    if ac is not None:
+        if ac.blocking:
+            notify_user(
+                "WINUX Anti-Cheat Warning",
+                f"{ac.name} ({ac.marker}) requires native Windows and is unsupported on Linux.",
+                urgency="critical",
+            )
+        else:
+            notify_user(
+                "WINUX Anti-Cheat Notice",
+                f"{ac.name} ({ac.marker}) detected; works only if developer enabled Proton/Linux support.",
+            )
     env = build_environment(prefix_dir, cfg)
     cmd = build_command(target, target_args, cfg)
     log_launch(target, cfg, cmd)

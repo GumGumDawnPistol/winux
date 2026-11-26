@@ -50,6 +50,7 @@ def build_setup_commands(
     install_gaming_apps: bool = True,
     bootstrap_win_runtimes: bool = True,
     install_nvidia: bool | None = None,
+    install_ai_stack: bool = False,
 ) -> list[SetupTask]:
     """Generate ordered post-install setup commands tailored to detected hardware."""
     tasks: list[SetupTask] = []
@@ -120,6 +121,24 @@ def build_setup_commands(
                     "vcrun2022",
                     "corefonts",
                 ],
+            )
+        )
+
+    if install_ai_stack:
+        ai_pkgs = ["ollama", "nvidia-container-toolkit", "cuda", "cudnn"] if "nvidia" in hw.gpu_vendors else ["ollama"]
+        tasks.append(
+            SetupTask(
+                task_id="ai-compute-stack",
+                title="Install local LLM & AI compute stack (opt-in)",
+                command=[
+                    "pkexec",
+                    "pacman",
+                    "-S",
+                    "--noconfirm",
+                    "--needed",
+                    *ai_pkgs,
+                ],
+                requires_root=True,
             )
         )
 

@@ -31,6 +31,29 @@ _GAME_DLL_HINTS = (
     "eoossdk-win64-shipping.dll",
 )
 
+_KERNEL_BLOCKER_ANTICHEATS: dict[str, str] = {
+    "vgk.sys": "Riot Vanguard",
+    "randgrid.sys": "Call of Duty Ricochet",
+    "mhyprot2.sys": "miHoYo Protect",
+    "mhyprot3.sys": "miHoYo Protect",
+    "ace-base.sys": "Anti-Cheat Expert",
+}
+
+_PROTON_OPTIN_ANTICHEATS: dict[str, str] = {
+    "bedaisy.sys": "BattlEye",
+    "easyanticheat.sys": "Easy Anti-Cheat",
+    "easyanticheat_eos.sys": "Easy Anti-Cheat (EOS)",
+}
+
+
+@dataclass(frozen=True)
+class AnticheatFinding:
+    """Detected anti-cheat driver/marker alongside Linux compatibility level."""
+
+    name: str
+    marker: str
+    blocking: bool
+
 
 @dataclass(frozen=True)
 class BinaryInfo:
@@ -124,3 +147,38 @@ def classify_target(target: Path, *, is_pe: bool = True, is_msi: bool = False) -
             return "game"
 
     return "app"
+
+
+def detect_anticheat(target: Path) -> AnticheatFinding | None:
+    """Inspect target directory (bounded 2-level scan) for Windows anti-cheat drivers."""
+    root = target.parent
+    if not root.is_dir():
+        return None
+
+    candidates: list[Path] = []
+    try:
+        for entry in root.iterdir():
+            candidates.append(entry)
+            if entry.is_dir():
+                try:
+                    candidates.extend(entry.iterdir())
+                except OSError:
+                    continue
+    except OSError:
+        return None
+
+    for item in candidates:
+        lower = item.name.lower()
+        if lower in _KERNEL_BLOCKER_ANTICHEATS:
+            return AnticheatFinding(
+                name=_KERNEL_BLOCKER_ANTICHEATS[lower],
+                marker=item.name,
+                blocking=True,
+            )
+        if lower in _PROTON_OPTIN_ANTICHEATS:
+            return AnticheatFinding(
+                name=_PROTON_OPTIN_ANTICHEATS[lower],
+                marker=item.name,
+                blocking=False,
+            )
+    return None

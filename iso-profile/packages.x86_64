@@ -120,8 +120,6 @@ lib32-freetype2
 lib32-pipewire
 lib32-libpulse
 lib32-alsa-plugins
-lib32-gst-plugins-base-libs
-lib32-gst-plugins-good
 lib32-nss
 lib32-libxtst
 lib32-gtk3

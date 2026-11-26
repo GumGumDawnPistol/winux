@@ -66,6 +66,7 @@ jobs:
           sudo umount -R /tmp/arch-boot/root.x86_64/winux || true
           sudo umount -R /tmp/arch-boot/root.x86_64 || true
           if compgen -G "build/out/winux-*.iso" > /dev/null; then
+            sudo chown -R "$(id -u):$(id -g)" build/out
             cd build/out
             sha256sum winux-*.iso > SHA256SUMS.txt
             ls -lh winux-*.iso SHA256SUMS.txt

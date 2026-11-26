@@ -1,0 +1,28 @@
+---
+componentName: default
+welcomeStyleCalamares: true
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 960px,640px
+windowPlacement: center
+
+strings:
+  productName: WINUX
+  shortProductName: WINUX
+  version: "2026.11"
+  shortVersion: "2026.11"
+  versionedName: "WINUX 2026.11"
+  shortVersionedName: "WINUX 2026.11"
+  bootloaderEntryName: WINUX
+  productUrl: "https://github.com/GumGumDawnPistol/winux"
+
+images:
+  productLogo: "/usr/share/icons/winux/winux-start.svg"
+  productIcon: "/usr/share/icons/winux/winux-start.svg"
+  productWallpaper: "/usr/share/wallpapers/winux/winux-hero.svg"
+
+style:
+  SidebarBackground: "#0f172a"
+  SidebarText: "#e2e8f0"
+  SidebarTextCurrent: "#ffffff"
+  SidebarBackgroundCurrent: "#0078d7"

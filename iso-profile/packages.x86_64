@@ -25,10 +25,14 @@ intel-ucode
 cachyos-keyring
 cachyos-mirrorlist
 btrfs-progs
+udisks2-btrfs
 snapper
 zram-generator
 networkmanager
 bluez-utils
+power-profiles-daemon
+cachyos-calamares
+xorg-xhost
 sudo
 python
 git
@@ -61,6 +65,11 @@ pipewire-alsa
 pipewire-pulse
 pipewire-jack
 wireplumber
+gst-plugin-pipewire
+gst-plugins-good
+gst-plugins-bad
+gst-plugins-ugly
+gst-libav
 
 # --- KDE Plasma 6 (Wayland) Desktop & Core Apps ---
 plasma-meta
@@ -80,6 +89,7 @@ vlc
 kcalc
 partitionmanager
 filelight
+kwalletmanager
 gvfs
 gvfs-mtp
 ffmpegthumbs
@@ -93,20 +103,25 @@ libnotify
 mesa
 mesa-utils
 nvidia-utils
+intel-media-driver
 vulkan-icd-loader
 vulkan-radeon
 vulkan-intel
+vulkan-mesa-layers
 vulkan-tools
 lib32-mesa
 lib32-nvidia-utils
 lib32-vulkan-icd-loader
 lib32-vulkan-radeon
 lib32-vulkan-intel
+lib32-vulkan-mesa-layers
 lib32-fontconfig
 lib32-freetype2
 lib32-pipewire
 lib32-libpulse
 lib32-alsa-plugins
+lib32-gst-plugins-base-libs
+lib32-gst-plugins-good
 lib32-nss
 lib32-libxtst
 lib32-gtk3
@@ -114,6 +129,8 @@ lib32-libnm
 
 # --- Windows Compatibility & Gaming ---
 wine-staging
+wine-mono
+wine-gecko
 winetricks
 icoutils
 pyside6

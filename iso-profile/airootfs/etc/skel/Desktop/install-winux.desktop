@@ -1,8 +1,9 @@
 [Desktop Entry]
 Name=Install WINUX
 Comment=Install WINUX to disk with Btrfs snapshots and Windows .exe support
-Exec=pkexec calamares
+Exec=/usr/local/bin/winux-install
 Icon=system-software-install
 Terminal=false
 Type=Application
 Categories=System;
+StartupNotify=true

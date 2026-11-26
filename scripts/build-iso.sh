@@ -55,6 +55,10 @@ configure_staged_profile() {
 
   ln -sf /usr/lib/systemd/system/NetworkManager.service \
     "${systemd_etc}/multi-user.target.wants/NetworkManager.service"
+  ln -sf /usr/lib/systemd/system/bluetooth.service \
+    "${systemd_etc}/multi-user.target.wants/bluetooth.service"
+  ln -sf /usr/lib/systemd/system/power-profiles-daemon.service \
+    "${systemd_etc}/multi-user.target.wants/power-profiles-daemon.service"
   ln -sf /usr/lib/systemd/system/systemd-binfmt.service \
     "${systemd_etc}/sysinit.target.wants/systemd-binfmt.service"
   ln -sf /usr/lib/systemd/system/sddm.service \
@@ -71,9 +75,9 @@ configure_staged_profile() {
             -e 's/Arch Linux install medium/WINUX Live Desktop (Boot without installing)/g' \
             -e 's/vmlinuz-linux\b/vmlinuz-linux-cachyos/g' \
             -e 's/initramfs-linux\.img\b/initramfs-linux-cachyos.img/g' \
-            -e '/^options / s/$/ cow_spacesize=4G/' \
-            -e '/^[[:space:]]*linux .*archisobasedir=/ s/$/ cow_spacesize=4G/' \
-            -e '/^[[:space:]]*APPEND .*archisobasedir=/ s/$/ cow_spacesize=4G/' {} +
+            -e '/^options / s/$/ cow_spacesize=4G nvidia-drm.modeset=1 nvidia-drm.fbdev=1/' \
+            -e '/^[[:space:]]*linux .*archisobasedir=/ s/$/ cow_spacesize=4G nvidia-drm.modeset=1 nvidia-drm.fbdev=1/' \
+            -e '/^[[:space:]]*APPEND .*archisobasedir=/ s/$/ cow_spacesize=4G nvidia-drm.modeset=1 nvidia-drm.fbdev=1/' {} +
       fi
     done
 

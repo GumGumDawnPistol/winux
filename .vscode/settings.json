@@ -9,6 +9,7 @@
     "winux-apply-theme": "python",
     "winux-welcome": "python",
     "winux-postinstall": "shellscript",
+    "winux-install": "shellscript",
     "profiledef.sh": "shellscript"
   },
   "python.analysis.extraPaths": [

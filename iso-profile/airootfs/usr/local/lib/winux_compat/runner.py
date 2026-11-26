@@ -121,4 +121,11 @@ def launch_target(
     log_launch(target, cfg, cmd)
     if not (prefix_dir / "drive_c").exists():
         notify_user("WINUX Windows Compatibility", f"Preparing prefix '{cfg.name}' for {target.name}...")
-    return subprocess.call(cmd, env=env)
+    rc = subprocess.call(cmd, env=env)
+    if rc != 0:
+        notify_user(
+            "WINUX Windows Compatibility",
+            f"{target.name} exited with code {rc}. Check ~/.local/state/winux/winux-exec.log",
+            urgency="critical",
+        )
+    return rc

@@ -3,6 +3,22 @@ set -euo pipefail
 
 # Post-install target configuration run inside the installed WINUX system by Calamares.
 
+if [[ "${1:-}" == "--prepare-initcpio" ]]; then
+  rm -f /etc/mkinitcpio.conf.d/archiso.conf
+  cat <<'EOF' > /etc/mkinitcpio.d/linux-cachyos.preset
+# mkinitcpio preset file for linux-cachyos on installed WINUX systems
+ALL_config="/etc/mkinitcpio.conf"
+ALL_kver="/boot/vmlinuz-linux-cachyos"
+
+PRESETS=('default' 'fallback')
+
+default_image="/boot/initramfs-linux-cachyos.img"
+fallback_image="/boot/initramfs-linux-cachyos-fallback.img"
+fallback_options="-S autodetect"
+EOF
+  exit 0
+fi
+
 # 1. Remove Live ISO SDDM autologin so installed systems require user login
 rm -f /etc/sddm.conf.d/autologin.conf
 
@@ -16,5 +32,5 @@ if findmnt -n -o FSTYPE / 2>/dev/null | grep -qx "btrfs"; then
   fi
 fi
 
-# 4. Ensure kernel binfmt_misc and ntsync services/modules are preset
+# 4. Ensure kernel binfmt_misc, display manager, and ntsync presets are enabled
 systemctl preset-all --preset-mode=enable-only || true

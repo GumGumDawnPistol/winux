@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Launch Calamares installer while preserving Wayland/X11 display context under pkexec.
+
+CALAMARES_BIN="$(command -v calamares || true)"
+if [[ -z "${CALAMARES_BIN}" ]]; then
+  if command -v kdialog >/dev/null 2>&1; then
+    kdialog --error "Calamares installer binary was not found on this system." --title "Install WINUX"
+  fi
+  exit 127
+fi
+
+# Ensure root can connect to XWayland if Calamares falls back to X11/xcb
+if [[ -n "${DISPLAY:-}" ]] && command -v xhost >/dev/null 2>&1; then
+  xhost +SI:localuser:root >/dev/null 2>&1 || true
+fi
+
+ENV_ARGS=(
+  "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+  "QT_QPA_PLATFORM=${QT_QPA_PLATFORM:-xcb;wayland}"
+)
+[[ -n "${DISPLAY:-}" ]] && ENV_ARGS+=("DISPLAY=${DISPLAY}")
+[[ -n "${WAYLAND_DISPLAY:-}" ]] && ENV_ARGS+=("WAYLAND_DISPLAY=${WAYLAND_DISPLAY}")
+[[ -n "${XAUTHORITY:-}" ]] && ENV_ARGS+=("XAUTHORITY=${XAUTHORITY}")
+
+# Ensure active WINUX Calamares config is preferred even if cachyos-calamares ships templates
+if [[ -f /etc/calamares/settings.conf ]]; then
+  exec pkexec env "${ENV_ARGS[@]}" "${CALAMARES_BIN}" -c /etc/calamares
+fi
+
+exec pkexec env "${ENV_ARGS[@]}" "${CALAMARES_BIN}"

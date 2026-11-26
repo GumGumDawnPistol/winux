@@ -1,5 +1,7 @@
 enable sddm.service
 enable NetworkManager.service
 enable systemd-binfmt.service
+enable bluetooth.service
+enable power-profiles-daemon.service
 enable snapper-timeline.timer
 enable snapper-cleanup.timer

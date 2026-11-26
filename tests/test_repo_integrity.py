@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 ISO_PROFILE = REPO_ROOT / "iso-profile"
 AIROOTFS = ISO_PROFILE / "airootfs"
 
-_LF_CHECK_SUFFIXES = {".sh", ".conf", ".desktop", ".preset", ".x86_64", ".js", ".svg"}
+_LF_CHECK_SUFFIXES = {".sh", ".conf", ".desktop", ".preset", ".x86_64", ".js", ".svg", ".desc", ".yml"}
 
 
 class RepoIntegrityTests(unittest.TestCase):
@@ -52,9 +52,14 @@ class RepoIntegrityTests(unittest.TestCase):
 
     def test_build_script_configures_live_boot_without_install(self) -> None:
         build_sh = (REPO_ROOT / "scripts" / "build-iso.sh").read_text(encoding="utf-8")
+        profiledef = (ISO_PROFILE / "profiledef.sh").read_text(encoding="utf-8")
         self.assertIn("WINUX Live Desktop (Boot without installing)", build_sh)
         self.assertIn("copytoram=y", build_sh)
         self.assertIn("cow_spacesize=4G", build_sh)
+        self.assertIn("nvidia-drm.modeset=1", build_sh)
+        self.assertIn("nvidia-drm.fbdev=1", build_sh)
+        self.assertIn("'-b' '256K'", profiledef)
+        self.assertIn('["/etc/skel/Desktop/install-winux.desktop"]="0:0:755"', profiledef)
 
 
 if __name__ == "__main__":

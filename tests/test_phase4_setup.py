@@ -62,7 +62,7 @@ class Phase4SetupTests(unittest.TestCase):
             self.assertEqual(loaded["tasks"], ["flathub"])
 
     def test_calamares_btrfs_and_postinstall_configs(self) -> None:
-        calamares = AIROOTFS / "etc" / "calamares"
+        calamares = AIROOTFS / "etc" / "winux-calamares"
         settings = (calamares / "settings.conf").read_text(encoding="utf-8")
         partition = (calamares / "modules" / "partition.conf").read_text(encoding="utf-8")
         mount = (calamares / "modules" / "mount.conf").read_text(encoding="utf-8")

@@ -24,9 +24,11 @@ ENV_ARGS=(
 [[ -n "${WAYLAND_DISPLAY:-}" ]] && ENV_ARGS+=("WAYLAND_DISPLAY=${WAYLAND_DISPLAY}")
 [[ -n "${XAUTHORITY:-}" ]] && ENV_ARGS+=("XAUTHORITY=${XAUTHORITY}")
 
-# Ensure active WINUX Calamares config is preferred even if cachyos-calamares ships templates
-if [[ -f /etc/calamares/settings.conf ]]; then
-  exec pkexec env "${ENV_ARGS[@]}" "${CALAMARES_BIN}" -c /etc/calamares
-fi
-
-exec pkexec env "${ENV_ARGS[@]}" "${CALAMARES_BIN}"
+# Overlay WINUX Calamares configuration right before launch to avoid package file conflicts
+exec pkexec env "${ENV_ARGS[@]}" /bin/bash -c '
+  if [[ -d /etc/winux-calamares ]]; then
+    mkdir -p /etc/calamares
+    cp -af /etc/winux-calamares/. /etc/calamares/
+  fi
+  exec "$1" "${@:2}"
+' _ "${CALAMARES_BIN}" "$@"

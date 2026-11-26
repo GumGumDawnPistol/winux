@@ -107,12 +107,10 @@ lib32-freetype2
 lib32-pipewire
 lib32-libpulse
 lib32-alsa-plugins
-lib32-openal
 lib32-nss
 lib32-libxtst
 lib32-gtk3
 lib32-libnm
-lib32-sdl2-compat
 
 # --- Windows Compatibility & Gaming ---
 wine-staging
@@ -130,5 +128,5 @@ steam
 lutris
 protontricks
 umu-launcher
-# proton-cachyos provides CachyOS + Proton-GE patches directly from [cachyos]
-proton-cachyos
+# proton-cachyos-native provides CachyOS + Proton-GE patches directly from [cachyos]
+proton-cachyos-native

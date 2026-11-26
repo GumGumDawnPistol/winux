@@ -5,6 +5,7 @@
 base
 linux-cachyos
 linux-cachyos-headers
+linux-cachyos-nvidia-open
 linux-firmware
 mkinitcpio
 mkinitcpio-archiso
@@ -14,6 +15,8 @@ pv
 arch-install-scripts
 dosfstools
 e2fsprogs
+ntfs-3g
+exfatprogs
 squashfs-tools
 syslinux
 edk2-shell
@@ -25,13 +28,32 @@ btrfs-progs
 snapper
 zram-generator
 networkmanager
+bluez-utils
 sudo
 python
 git
 curl
+wget
 unzip
 7zip
+rsync
+openssh
+nano
+vim
+htop
+btop
+fastfetch
+less
+man-db
+bash-completion
+dmidecode
+lm_sensors
+lsof
+pciutils
+usbutils
 xdg-user-dirs
+xdg-utils
+desktop-file-utils
 
 # --- Audio (PipeWire) ---
 pipewire
@@ -40,28 +62,57 @@ pipewire-pulse
 pipewire-jack
 wireplumber
 
-# --- KDE Plasma 6 (Wayland) Desktop ---
+# --- KDE Plasma 6 (Wayland) Desktop & Core Apps ---
 plasma-meta
 sddm
+xdg-desktop-portal
 xdg-desktop-portal-kde
+plasma-systemmonitor
+firefox
 dolphin
 konsole
 kate
 ark
+spectacle
+gwenview
+okular
+vlc
+kcalc
+partitionmanager
+filelight
+gvfs
+gvfs-mtp
+ffmpegthumbs
+kdegraphics-thumbnailers
 noto-fonts
 ttf-liberation
+zenity
+libnotify
 
-# --- GPU & Vulkan Stack (AMD / Intel + 32-bit multilib) ---
+# --- GPU & Vulkan Stack (AMD / Intel / NVIDIA + 32-bit multilib) ---
 mesa
 mesa-utils
+nvidia-utils
 vulkan-icd-loader
 vulkan-radeon
 vulkan-intel
 vulkan-tools
 lib32-mesa
+lib32-nvidia-utils
 lib32-vulkan-icd-loader
 lib32-vulkan-radeon
 lib32-vulkan-intel
+lib32-fontconfig
+lib32-freetype2
+lib32-pipewire
+lib32-libpulse
+lib32-alsa-plugins
+lib32-openal
+lib32-nss
+lib32-libxtst
+lib32-gtk3
+lib32-libnm
+lib32-sdl2-compat
 
 # --- Windows Compatibility & Gaming ---
 wine-staging
@@ -73,9 +124,11 @@ gamemode
 lib32-gamemode
 mangohud
 lib32-mangohud
+goverlay
 flatpak
 steam
+lutris
+protontricks
 umu-launcher
 # proton-cachyos provides CachyOS + Proton-GE patches directly from [cachyos]
-# (proton-ge-custom-bin is AUR-only and can be installed post-boot or via local repo)
 proton-cachyos

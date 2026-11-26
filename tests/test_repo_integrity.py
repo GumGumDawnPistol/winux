@@ -54,6 +54,7 @@ class RepoIntegrityTests(unittest.TestCase):
         build_sh = (REPO_ROOT / "scripts" / "build-iso.sh").read_text(encoding="utf-8")
         self.assertIn("WINUX Live Desktop (Boot without installing)", build_sh)
         self.assertIn("copytoram=y", build_sh)
+        self.assertIn("cow_spacesize=4G", build_sh)
 
 
 if __name__ == "__main__":

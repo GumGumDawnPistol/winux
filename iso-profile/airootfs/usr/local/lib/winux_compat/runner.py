@@ -93,6 +93,21 @@ def log_launch(target: Path, cfg: PrefixConfig, cmd: list[str], state_dir: Path 
         pass
 
 
+def notify_user(title: str, body: str, *, urgency: str = "normal") -> None:
+    """Send a best-effort desktop notification when running outside a terminal."""
+    notify_send = shutil.which("notify-send")
+    if not notify_send or sys.stdout.isatty():
+        return
+    try:
+        subprocess.Popen(
+            [notify_send, "-u", urgency, "-a", "WINUX", title, body],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except OSError:
+        pass
+
+
 def launch_target(
     target: Path,
     target_args: list[str],
@@ -104,4 +119,6 @@ def launch_target(
     env = build_environment(prefix_dir, cfg)
     cmd = build_command(target, target_args, cfg)
     log_launch(target, cfg, cmd)
+    if not (prefix_dir / "drive_c").exists():
+        notify_user("WINUX Windows Compatibility", f"Preparing prefix '{cfg.name}' for {target.name}...")
     return subprocess.call(cmd, env=env)

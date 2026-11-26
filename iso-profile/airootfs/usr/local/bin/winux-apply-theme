@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 DEFAULT_LAYOUT_JS = Path("/usr/local/share/winux/plasma-win10-layout.js")
@@ -28,6 +29,25 @@ def find_qdbus(which_fn=shutil.which) -> str | None:
     return None
 
 
+def wait_for_plasmashell(
+    qdbus: str,
+    *,
+    retries: int = 15,
+    delay_seconds: float = 1.0,
+    run_fn=subprocess.run,
+    sleep_fn=time.sleep,
+) -> bool:
+    """Wait until org.kde.plasmashell registers /PlasmaShell on D-Bus."""
+    probe_cmd = [qdbus, "org.kde.plasmashell", "/PlasmaShell"]
+    for attempt in range(max(1, retries)):
+        res = run_fn(probe_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        if res.returncode == 0:
+            return True
+        if attempt + 1 < retries:
+            sleep_fn(delay_seconds)
+    return False
+
+
 def apply_layout(
     *,
     layout_js: Path = DEFAULT_LAYOUT_JS,
@@ -36,6 +56,7 @@ def apply_layout(
     dry_run: bool = False,
     which_fn=shutil.which,
     run_fn=subprocess.run,
+    sleep_fn=time.sleep,
 ) -> int:
     """Evaluate plasma-win10-layout.js in PlasmaShell unless already applied."""
     marker_file = marker or marker_path()
@@ -63,6 +84,7 @@ def apply_layout(
         print("DRY-RUN:", " ".join(cmd[:4]), "<plasma-win10-layout.js>")
         return 0
 
+    wait_for_plasmashell(qdbus, run_fn=run_fn, sleep_fn=sleep_fn)
     res = run_fn(cmd, check=False)
     if res.returncode != 0:
         return res.returncode

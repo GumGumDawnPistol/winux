@@ -19,14 +19,12 @@ kickoff.writeConfig("favoritesPortedToKAstats", "true");
 kickoff.currentConfigGroup = ["Shortcuts"];
 kickoff.writeConfig("global", "Alt+F1");
 
-// Quick Search (KRunner trigger)
-var searchBtn = taskbar.addWidget("org.kde.plasma.krunner");
-
 // Pinned Windows-style Icons-Only Task Manager
 var tasks = taskbar.addWidget("org.kde.plasma.icontasks");
 tasks.currentConfigGroup = ["General"];
 tasks.writeConfig("launchers", [
     "applications:org.kde.dolphin.desktop",
+    "applications:firefox.desktop",
     "applications:org.kde.konsole.desktop",
     "applications:winux-manager.desktop",
     "applications:steam.desktop"

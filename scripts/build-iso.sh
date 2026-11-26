@@ -70,7 +70,10 @@ configure_staged_profile() {
           sed -i \
             -e 's/Arch Linux install medium/WINUX Live Desktop (Boot without installing)/g' \
             -e 's/vmlinuz-linux\b/vmlinuz-linux-cachyos/g' \
-            -e 's/initramfs-linux\.img\b/initramfs-linux-cachyos.img/g' {} +
+            -e 's/initramfs-linux\.img\b/initramfs-linux-cachyos.img/g' \
+            -e '/^options / s/$/ cow_spacesize=4G/' \
+            -e '/^[[:space:]]*linux .*archisobasedir=/ s/$/ cow_spacesize=4G/' \
+            -e '/^[[:space:]]*APPEND .*archisobasedir=/ s/$/ cow_spacesize=4G/' {} +
       fi
     done
 

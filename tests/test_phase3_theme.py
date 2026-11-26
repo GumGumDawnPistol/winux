@@ -56,6 +56,8 @@ class Phase3ThemeTests(unittest.TestCase):
         self.assertIn("org.kde.plasma.kickoff", js)
         self.assertIn("org.kde.plasma.icontasks", js)
         self.assertIn("org.kde.plasma.showdesktop", js)
+        self.assertIn("firefox.desktop", js)
+        self.assertNotIn("org.kde.plasma.krunner", js)
         self.assertIn("winux-start.svg", js)
 
     def test_winux_apply_theme_idempotent_and_force(self) -> None:
@@ -64,7 +66,7 @@ class Phase3ThemeTests(unittest.TestCase):
 
         calls: list[list[str]] = []
 
-        def fake_run(cmd: list[str], check: bool = False):
+        def fake_run(cmd: list[str], **_kwargs):
             calls.append(cmd)
             return SimpleNamespace(returncode=0)
 
@@ -75,10 +77,12 @@ class Phase3ThemeTests(unittest.TestCase):
                 marker=marker,
                 which_fn=lambda name: "/usr/bin/qdbus6" if name == "qdbus6" else None,
                 run_fn=fake_run,
+                sleep_fn=lambda _s: None,
             )
             self.assertEqual(rc1, 0)
             self.assertTrue(marker.is_file())
-            self.assertEqual(len(calls), 1)
+            eval_calls = [c for c in calls if "evaluateScript" in " ".join(c)]
+            self.assertEqual(len(eval_calls), 1)
 
             # Second call without --force must be a no-op
             rc2 = mod.apply_layout(
@@ -86,9 +90,11 @@ class Phase3ThemeTests(unittest.TestCase):
                 marker=marker,
                 which_fn=lambda name: "/usr/bin/qdbus6" if name == "qdbus6" else None,
                 run_fn=fake_run,
+                sleep_fn=lambda _s: None,
             )
             self.assertEqual(rc2, 0)
-            self.assertEqual(len(calls), 1)
+            eval_calls = [c for c in calls if "evaluateScript" in " ".join(c)]
+            self.assertEqual(len(eval_calls), 1)
 
             # --force re-applies
             rc3 = mod.apply_layout(
@@ -97,9 +103,11 @@ class Phase3ThemeTests(unittest.TestCase):
                 force=True,
                 which_fn=lambda name: "/usr/bin/qdbus6" if name == "qdbus6" else None,
                 run_fn=fake_run,
+                sleep_fn=lambda _s: None,
             )
             self.assertEqual(rc3, 0)
-            self.assertEqual(len(calls), 2)
+            eval_calls = [c for c in calls if "evaluateScript" in " ".join(c)]
+            self.assertEqual(len(eval_calls), 2)
 
     def test_systemd_preset_enables_core_services(self) -> None:
         preset = (AIROOTFS / "etc" / "systemd" / "system-preset" / "10-winux.preset").read_text(encoding="utf-8")

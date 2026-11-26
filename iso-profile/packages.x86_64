@@ -7,6 +7,10 @@ linux-cachyos
 linux-cachyos-headers
 linux-firmware
 mkinitcpio
+mkinitcpio-archiso
+dosfstools
+e2fsprogs
+squashfs-tools
 syslinux
 edk2-shell
 amd-ucode

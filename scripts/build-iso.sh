@@ -68,10 +68,20 @@ configure_staged_profile() {
       if [[ -d "${STAGED_PROFILE}/${boot_dir}" ]]; then
         find "${STAGED_PROFILE}/${boot_dir}" -type f \( -name '*.conf' -o -name '*.cfg' \) -exec \
           sed -i \
+            -e 's/Arch Linux install medium/WINUX Live Desktop (Boot without installing)/g' \
             -e 's/vmlinuz-linux\b/vmlinuz-linux-cachyos/g' \
             -e 's/initramfs-linux\.img\b/initramfs-linux-cachyos.img/g' {} +
       fi
     done
+
+    local efi_entries="${STAGED_PROFILE}/efiboot/loader/entries"
+    if [[ -f "${efi_entries}/01-archiso-x86_64-linux.conf" ]]; then
+      cp "${efi_entries}/01-archiso-x86_64-linux.conf" "${efi_entries}/02-winux-x86_64-ram.conf"
+      sed -i \
+        -e 's/WINUX Live Desktop (Boot without installing)/WINUX Live Desktop (Boot to RAM without installing)/g' \
+        -e '/^options / s/$/ copytoram=y/' \
+        "${efi_entries}/02-winux-x86_64-ram.conf"
+    fi
   fi
 }
 

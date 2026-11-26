@@ -50,6 +50,11 @@ class RepoIntegrityTests(unittest.TestCase):
             self.assertRegex(text, re.compile(r"^Name=.+$", re.MULTILINE), f"Missing Name= in {desktop}")
             self.assertRegex(text, re.compile(r"^Exec=.+$", re.MULTILINE), f"Missing Exec= in {desktop}")
 
+    def test_build_script_configures_live_boot_without_install(self) -> None:
+        build_sh = (REPO_ROOT / "scripts" / "build-iso.sh").read_text(encoding="utf-8")
+        self.assertIn("WINUX Live Desktop (Boot without installing)", build_sh)
+        self.assertIn("copytoram=y", build_sh)
+
 
 if __name__ == "__main__":
     unittest.main()
